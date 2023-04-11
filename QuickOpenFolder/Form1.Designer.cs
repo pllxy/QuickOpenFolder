@@ -65,6 +65,8 @@
             // 
             // txtFolderPathTextBox
             // 
+            this.txtFolderPathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFolderPathTextBox.Location = new System.Drawing.Point(175, 13);
             this.txtFolderPathTextBox.Name = "txtFolderPathTextBox";
             this.txtFolderPathTextBox.ReadOnly = true;
@@ -98,6 +100,8 @@
             // 
             // ShowDirectoryTextBox
             // 
+            this.ShowDirectoryTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ShowDirectoryTextBox.Location = new System.Drawing.Point(175, 174);
             this.ShowDirectoryTextBox.Name = "ShowDirectoryTextBox";
             this.ShowDirectoryTextBox.ReadOnly = true;
@@ -106,6 +110,8 @@
             // 
             // ShowUpdateStateTextBox
             // 
+            this.ShowUpdateStateTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ShowUpdateStateTextBox.Location = new System.Drawing.Point(175, 46);
             this.ShowUpdateStateTextBox.Name = "ShowUpdateStateTextBox";
             this.ShowUpdateStateTextBox.ReadOnly = true;
@@ -114,6 +120,8 @@
             // 
             // ShowClipboardContentTextBox
             // 
+            this.ShowClipboardContentTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.ShowClipboardContentTextBox.Location = new System.Drawing.Point(33, 144);
             this.ShowClipboardContentTextBox.Name = "ShowClipboardContentTextBox";
             this.ShowClipboardContentTextBox.ReadOnly = true;

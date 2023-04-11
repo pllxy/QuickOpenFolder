@@ -135,10 +135,10 @@ namespace QuickOpenFolder
             string json = File.ReadAllText("folderNames.json");
             List<string> list = JsonConvert.DeserializeObject<List<string>>(json);
 
-            // 在列表中查找包含指定文本的第一个项,删去特殊字符
+            // 在列表中查找包含指定文本的第一个项,删去特殊字符和压缩包后缀
             string searchText = folderName;
-            string searchTextWithoutExtension = Path.GetFileNameWithoutExtension(searchText);
-            searchText = searchTextWithoutExtension;
+            string cleanedSearchText = Regex.Replace(searchText, "\\.zip|\\.rar|\\.7z$", "");
+            cleanedSearchText = Regex.Replace(cleanedSearchText, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
             string match = list.FirstOrDefault(item =>
             {
                 string fileName = item;
@@ -148,7 +148,6 @@ namespace QuickOpenFolder
                     fileName = fileName.Substring(lastBackslashIndex + 1);
                 }
                 string cleanedFileName = Regex.Replace(fileName, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
-                string cleanedSearchText = Regex.Replace(searchText, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
                 return cleanedFileName.Equals(cleanedSearchText.Replace(" ", ""), StringComparison.OrdinalIgnoreCase);
             });
 
