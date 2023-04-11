@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 namespace QuickOpenFolder
 {
@@ -92,6 +93,7 @@ namespace QuickOpenFolder
                 }
             }
             UpdateFoldersNames();
+            Reset();
         }
 
         /// <summary>
@@ -102,6 +104,7 @@ namespace QuickOpenFolder
         private void UpdateFoldersName_Click(object sender, EventArgs e)
         {
             UpdateFoldersNames();
+            Reset();
         }
 
         /// <summary>
@@ -132,9 +135,20 @@ namespace QuickOpenFolder
             string json = File.ReadAllText("folderNames.json");
             List<string> list = JsonConvert.DeserializeObject<List<string>>(json);
 
-            // 在列表中查找包含指定文本的第一个项
+            // 在列表中查找包含指定文本的第一个项,删去特殊字符
             string searchText = folderName;
-            string match = list.FirstOrDefault(item => item.Replace(" ", "").Contains(searchText.Replace(" ", "")));
+            string match = list.FirstOrDefault(item =>
+            {
+                string fileName = item;
+                int lastBackslashIndex = fileName.LastIndexOf('\\');
+                if (lastBackslashIndex >= 0 && lastBackslashIndex < fileName.Length - 1)
+                {
+                    fileName = fileName.Substring(lastBackslashIndex + 1);
+                }
+                string cleanedFileName = Regex.Replace(fileName, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                string cleanedSearchText = Regex.Replace(searchText, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                return cleanedFileName.Equals(cleanedSearchText.Replace(" ", ""), StringComparison.OrdinalIgnoreCase);
+            });
 
             // 输出匹配项（如果找到了）
             if (match != null)
@@ -218,11 +232,19 @@ namespace QuickOpenFolder
         }
 
         /// <summary>
-        /// 清空剪切板
+        /// 清空剪切板按钮
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ResetButton_Click(object sender, EventArgs e)
+        {
+            Reset();
+        }
+
+        /// <summary>
+        /// 清空剪切板
+        /// </summary>
+        private void Reset()
         {
             Clipboard.Clear();
             mainWindow.clipboardText = "";
