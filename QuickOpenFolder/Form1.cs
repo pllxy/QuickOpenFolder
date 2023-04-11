@@ -21,6 +21,7 @@ namespace QuickOpenFolder
         public Form1()
         {
             InitializeComponent();
+            //判断是否存在folderpath.txt和folderNames.json，不存在则生成
             string exePath = System.Reflection.Assembly.GetEntryAssembly().Location;
             string folderPath = Path.GetDirectoryName(exePath);
             string folderPathFile = Path.Combine(folderPath, "folderpath.txt");
@@ -66,7 +67,7 @@ namespace QuickOpenFolder
         private void OpenFolder(string directory)
         {
             mainWindow.folderPath = directory;
-            System.Diagnostics.Process.Start("explorer.exe", mainWindow.folderPath);
+            System.Diagnostics.Process.Start("explorer.exe", "\"" + mainWindow.folderPath + "\"");
         }
 
         /// <summary>
