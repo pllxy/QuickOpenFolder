@@ -21,6 +21,18 @@ namespace QuickOpenFolder
         public Form1()
         {
             InitializeComponent();
+            string exePath = System.Reflection.Assembly.GetEntryAssembly().Location;
+            string folderPath = Path.GetDirectoryName(exePath);
+            string folderPathFile = Path.Combine(folderPath, "folderpath.txt");
+            string folderNamesFile = Path.Combine(folderPath, "folderNames.json");
+            if (!File.Exists(Path.Combine(folderPath, "folderpath.txt")))
+            {
+                File.WriteAllText(folderPathFile, "");
+            }
+            if (!File.Exists(Path.Combine(folderPath, "folderNames.json")))
+            {
+                File.WriteAllText(folderNamesFile, "[\"\"]");
+            }
             mainWindow.defaultSelectFolderPath = System.IO.File.ReadAllText("folderpath.txt");
             txtFolderPathTextBox.Text = mainWindow.defaultSelectFolderPath;
 
@@ -121,7 +133,7 @@ namespace QuickOpenFolder
 
             // 在列表中查找包含指定文本的第一个项
             string searchText = folderName;
-            string match = list.FirstOrDefault(item => item.Contains(searchText));
+            string match = list.FirstOrDefault(item => item.Replace(" ", "").Contains(searchText.Replace(" ", "")));
 
             // 输出匹配项（如果找到了）
             if (match != null)
