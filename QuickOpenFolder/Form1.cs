@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 namespace QuickOpenFolder
 {
@@ -92,6 +93,7 @@ namespace QuickOpenFolder
                 }
             }
             UpdateFoldersNames();
+            Reset();
         }
 
         /// <summary>
@@ -102,6 +104,7 @@ namespace QuickOpenFolder
         private void UpdateFoldersName_Click(object sender, EventArgs e)
         {
             UpdateFoldersNames();
+            Reset();
         }
 
         /// <summary>
@@ -132,9 +135,22 @@ namespace QuickOpenFolder
             string json = File.ReadAllText("folderNames.json");
             List<string> list = JsonConvert.DeserializeObject<List<string>>(json);
 
-            // 在列表中查找包含指定文本的第一个项
+            // 在列表中查找包含指定文本的第一个项,删去特殊字符
             string searchText = folderName;
-            string match = list.FirstOrDefault(item => item.Replace(" ", "").Contains(searchText.Replace(" ", "")));
+            string searchTextWithoutExtension = Path.GetFileNameWithoutExtension(searchText);
+            searchText = searchTextWithoutExtension;
+            string match = list.FirstOrDefault(item =>
+            {
+                string fileName = item;
+                int lastBackslashIndex = fileName.LastIndexOf('\\');
+                if (lastBackslashIndex >= 0 && lastBackslashIndex < fileName.Length - 1)
+                {
+                    fileName = fileName.Substring(lastBackslashIndex + 1);
+                }
+                string cleanedFileName = Regex.Replace(fileName, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                string cleanedSearchText = Regex.Replace(searchText, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                return cleanedFileName.Equals(cleanedSearchText.Replace(" ", ""), StringComparison.OrdinalIgnoreCase);
+            });
 
             // 输出匹配项（如果找到了）
             if (match != null)
@@ -194,10 +210,31 @@ namespace QuickOpenFolder
                             JObject jsonObject = JObject.Parse(mainWindow.clipboardText);
                             foreach (JProperty property in jsonObject.Properties())
                             {
-                                mainWindow.nameValue = property.Value.ToString();
-                                mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
-                                if (mainWindow.folderPath != "Not Found") { ShowDirectoryTextBox.Text = mainWindow.folderPath; break; }
-                                ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                if (property.Value.Type == JTokenType.String)
+                                {
+                                    mainWindow.nameValue = property.Value.ToString();
+                                    mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                                    ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                    if (mainWindow.folderPath != "Not Found")
+                                    {
+                                        break;
+                                    }
+                                }
+                                else if (property.Value.Type == JTokenType.Array)
+                                {
+                                    JArray array = (JArray)property.Value;
+                                    foreach (JToken token in array)
+                                    {
+                                        mainWindow.nameValue = token.ToString();
+                                        mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                                        ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                        if (mainWindow.folderPath != "Not Found")
+                                        {
+                                            ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         }
                         catch
@@ -218,11 +255,19 @@ namespace QuickOpenFolder
         }
 
         /// <summary>
-        /// 清空剪切板
+        /// 清空剪切板按钮
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ResetButton_Click(object sender, EventArgs e)
+        {
+            Reset();
+        }
+
+        /// <summary>
+        /// 清空剪切板
+        /// </summary>
+        private void Reset()
         {
             Clipboard.Clear();
             mainWindow.clipboardText = "";
