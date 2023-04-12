@@ -11,12 +11,14 @@ using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace QuickOpenFolder
 {
     public partial class Form1 : Form
     {
-
         MainWindow mainWindow = new MainWindow();
 
         public Form1()
@@ -36,6 +38,7 @@ namespace QuickOpenFolder
                 File.WriteAllText(folderNamesFile, "[\"\"]");
             }
             mainWindow.defaultSelectFolderPath = System.IO.File.ReadAllText("folderpath.txt");
+            //UpdateFoldersNames();
             txtFolderPathTextBox.Text = mainWindow.defaultSelectFolderPath;
 
             // 设置 Timer 控件的间隔时间为 1 秒
@@ -62,7 +65,7 @@ namespace QuickOpenFolder
         }
 
         /// <summary>
-        /// 打开文件夹
+        /// 打开文件夹,并保存前一个路径
         /// </summary>
         /// <param name="directory"></param>
         private void OpenFolder(string directory)
@@ -154,7 +157,6 @@ namespace QuickOpenFolder
             // 输出匹配项（如果找到了）
             if (match != null)
             {
-                OpenFolder(match);
                 return match;
             }
             else
@@ -187,6 +189,29 @@ namespace QuickOpenFolder
         }
 
         /// <summary>
+        /// 重命名提醒按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RenameButton_Click(object sender, EventArgs e)
+        {
+            if (mainWindow.renameButtonState == true) // 当前为第一个状态
+            {
+                // 执行第一个状态的操作
+                RenameButton.Text = "重命名提醒(已关闭)";
+                RenameButton.ForeColor = Color.Black;
+                mainWindow.renameButtonState = false; // 切换为第二个状态
+            }
+            else // 当前为第二个状态
+            {
+                // 执行第二个状态的操作
+                RenameButton.Text = "重命名提醒(已开启)";
+                RenameButton.ForeColor = Color.Red;
+                mainWindow.renameButtonState = true; // 切换为第一个状态
+            }
+        }
+
+        /// <summary>
         /// 定时检测剪切板
         /// </summary>
         /// <param name="sender"></param>
@@ -207,15 +232,20 @@ namespace QuickOpenFolder
                         try
                         {
                             JObject jsonObject = JObject.Parse(mainWindow.clipboardText);
+                            string nameForRename = "";
                             foreach (JProperty property in jsonObject.Properties())
                             {
                                 if (property.Value.Type == JTokenType.String)
                                 {
                                     mainWindow.nameValue = property.Value.ToString();
+                                    string match = Regex.Replace(mainWindow.nameValue, "\\.zip|\\.rar|\\.7z$", "");
+                                    mainWindow.h1Name = match;
                                     mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
                                     ShowDirectoryTextBox.Text = mainWindow.folderPath;
                                     if (mainWindow.folderPath != "Not Found")
                                     {
+                                        OpenFolder(mainWindow.folderPath);
+                                        nameForRename = mainWindow.nameValue;
                                         break;
                                     }
                                 }
@@ -229,7 +259,15 @@ namespace QuickOpenFolder
                                         ShowDirectoryTextBox.Text = mainWindow.folderPath;
                                         if (mainWindow.folderPath != "Not Found")
                                         {
-                                            ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                            //ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                            if (mainWindow.renameButtonState == true)
+                                            {
+                                                Regex regex = new Regex(@".*\\");
+                                                Match match = regex.Match(mainWindow.folderPath);
+                                                mainWindow.previousDirectory = match.Value;
+                                                RenameFolder(mainWindow.folderPath, mainWindow.previousDirectory + mainWindow.h1Name);
+                                                OpenFolder(mainWindow.folderPath);
+                                            }
                                             break;
                                         }
                                     }
@@ -241,12 +279,43 @@ namespace QuickOpenFolder
                             mainWindow.folderPath = CompareFolderName(mainWindow.clipboardText);
                             mainWindow.nameValue = mainWindow.clipboardText;
                             ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                            if (mainWindow.folderPath != "Not Found")
+                            {
+                                OpenFolder(mainWindow.folderPath);
+                            }
                         }
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// 重命名磁链文本
+        /// </summary>
+        /// <param name="oldName"></param>
+        /// <param name="newName"></param>
+        private void RenameFolder(string oldName, string newName)
+        {
+            DialogResult result = MessageBox.Show("此文本为磁链内文本，不是eh标题文本，是否重命名？", "提示", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    Directory.Move(oldName, newName);
+                    Console.WriteLine("Folder renamed successfully.");
+                    mainWindow.folderPath = mainWindow.previousDirectory + mainWindow.h1Name;
+                    UpdateFoldersNames();
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine("Error renaming folder: " + ex.Message);
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {

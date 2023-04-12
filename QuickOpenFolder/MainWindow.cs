@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,9 +27,24 @@ namespace QuickOpenFolder
         public string clipboardText { get; set; }
 
         /// <summary>
+        /// h1元素
+        /// </summary>
+        public string h1Name { get; set; }
+
+        /// <summary>
+        /// 打开文件夹的前一个路径
+        /// </summary>
+        public string previousDirectory { get; set; }
+
+        /// <summary>
         /// 自动匹配剪切板内容按钮状态
         /// </summary>
         public bool compareFolderNameButtonState = true;
+
+        /// <summary>
+        /// 提醒重命名按钮状态
+        /// </summary>
+        public bool renameButtonState = true;
 
         /// <summary>
         /// 用于匹配的目标名称，默认不包含于剪切板内容
@@ -49,6 +66,22 @@ namespace QuickOpenFolder
                 subfolders.AddRange(GetSubfolders(subfolderPath));
             }
             return subfolders;
+        }
+
+        [DllImport("user32.dll", EntryPoint = "ShowWindow", SetLastError = true)]
+        static extern bool ShowWindow(IntPtr hWnd, uint nCmdShow);
+
+
+
+        [DllImport("User32.dll", EntryPoint = "FindWindow")]
+        public static extern int FindWindow(string lpClassName, string lpWindowName);
+
+
+
+        public void CloseFolder(string folderPath)
+        {
+
+
         }
     }
 }
