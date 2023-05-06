@@ -96,7 +96,7 @@ namespace QuickOpenFolder
                 }
             }
             UpdateFoldersNames();
-            Reset();
+            DealWithClipboard();
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace QuickOpenFolder
         private void UpdateFoldersName_Click(object sender, EventArgs e)
         {
             UpdateFoldersNames();
-            Reset();
+            DealWithClipboard();
         }
 
         /// <summary>
@@ -161,7 +161,28 @@ namespace QuickOpenFolder
             }
             else
             {
-                return "Not Found";
+                //保留压缩包后缀再次匹配
+                searchText = folderName;
+                searchText = Regex.Replace(searchText, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                match = list.FirstOrDefault(item =>
+                {
+                    string fileName = item;
+                    int lastBackslashIndex = fileName.LastIndexOf('\\');
+                    if (lastBackslashIndex >= 0 && lastBackslashIndex < fileName.Length - 1)
+                    {
+                        fileName = fileName.Substring(lastBackslashIndex + 1);
+                    }
+                    string cleanedFileName = Regex.Replace(fileName, "[,\\s.\\t\\n\\r:;\"'\\-_/\\\\=+*%|\\$#?]", "");
+                    return cleanedFileName.Equals(searchText.Replace(" ", ""), StringComparison.OrdinalIgnoreCase);
+                });
+                if (match != null)
+                {
+                    return match;
+                }
+                else
+                {
+                    return "Not Found";
+                }
             }
         }
 
@@ -220,73 +241,118 @@ namespace QuickOpenFolder
         {
             if (mainWindow.compareFolderNameButtonState == true)
             {
-                // 检查剪贴板内容是否更改
+                // 检查剪贴板是否有内容
                 if (Clipboard.ContainsText())
                 {
                     mainWindow.clipboardText = Clipboard.GetText();
                     ShowClipboardContentTextBox.Text = mainWindow.clipboardText;
-                    //检测剪切板内容是否已包含目标名称
                     if (!mainWindow.clipboardText.Contains(mainWindow.nameValue))
                     {
-                        // 根据是否是json格式分别处理
-                        try
+                        DealWithClipboard();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理剪切板
+        /// </summary>
+
+        private void DealWithClipboard()
+        {
+            mainWindow.clipboardText = Clipboard.GetText();
+            ShowClipboardContentTextBox.Text = mainWindow.clipboardText;
+
+            // 根据是否是json格式分别处理
+            try
+            {
+                JObject jsonObject = JObject.Parse(mainWindow.clipboardText);
+                string nameForRename = "";
+                foreach (JProperty property in jsonObject.Properties())
+                {
+                    if (property.Value.Type == JTokenType.String)
+                    {
+                        mainWindow.nameValue = property.Value.ToString();
+                        mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                        ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                        if (mainWindow.folderPath == "Not Found")
                         {
-                            JObject jsonObject = JObject.Parse(mainWindow.clipboardText);
-                            string nameForRename = "";
-                            foreach (JProperty property in jsonObject.Properties())
-                            {
-                                if (property.Value.Type == JTokenType.String)
-                                {
-                                    mainWindow.nameValue = property.Value.ToString();
-                                    string match = Regex.Replace(mainWindow.nameValue, "\\.zip|\\.rar|\\.7z$", "");
-                                    mainWindow.h1Name = match;
-                                    mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
-                                    ShowDirectoryTextBox.Text = mainWindow.folderPath;
-                                    if (mainWindow.folderPath != "Not Found")
-                                    {
-                                        OpenFolder(mainWindow.folderPath);
-                                        nameForRename = mainWindow.nameValue;
-                                        break;
-                                    }
-                                }
-                                else if (property.Value.Type == JTokenType.Array)
-                                {
-                                    JArray array = (JArray)property.Value;
-                                    foreach (JToken token in array)
-                                    {
-                                        mainWindow.nameValue = token.ToString();
-                                        mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
-                                        ShowDirectoryTextBox.Text = mainWindow.folderPath;
-                                        if (mainWindow.folderPath != "Not Found")
-                                        {
-                                            //ShowDirectoryTextBox.Text = mainWindow.folderPath;
-                                            if (mainWindow.renameButtonState == true)
-                                            {
-                                                Regex regex = new Regex(@".*\\");
-                                                Match match = regex.Match(mainWindow.folderPath);
-                                                mainWindow.previousDirectory = match.Value;
-                                                RenameFolder(mainWindow.folderPath, mainWindow.previousDirectory + mainWindow.h1Name);
-                                                OpenFolder(mainWindow.folderPath);
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            mainWindow.folderPath = CompareFolderName(mainWindow.clipboardText);
-                            mainWindow.nameValue = mainWindow.clipboardText;
+                            UpdateFoldersNames();
+                            mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
                             ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                        }
+                        if (mainWindow.folderPath != "Not Found")
+                        {
+                            OpenFolder(mainWindow.folderPath);
+                            nameForRename = mainWindow.nameValue;
+                            break;
+                        }
+                        //删去后缀，重复匹配
+                        string match = Regex.Replace(mainWindow.nameValue, "\\.zip|\\.rar|\\.7z$", "");
+                        mainWindow.h1Name = match;
+                        mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                        ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                        if (mainWindow.folderPath == "Not Found")
+                        {
+                            UpdateFoldersNames();
+                            mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                            ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                        }
+                        if (mainWindow.folderPath != "Not Found")
+                        {
+                            OpenFolder(mainWindow.folderPath);
+                            nameForRename = mainWindow.nameValue;
+                            break;
+                        }
+                    }
+                    else if (property.Value.Type == JTokenType.Array)
+                    {
+                        JArray array = (JArray)property.Value;
+                        foreach (JToken token in array)
+                        {
+                            mainWindow.nameValue = token.ToString();
+                            mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                            ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                            if (mainWindow.folderPath == "Not Found")
+                            {
+                                UpdateFoldersNames();
+                                mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                                ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                            }
                             if (mainWindow.folderPath != "Not Found")
                             {
-                                OpenFolder(mainWindow.folderPath);
+                                //ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                                if (mainWindow.renameButtonState == true)
+                                {
+                                    Regex regex = new Regex(@".*\\");
+                                    Match match = regex.Match(mainWindow.folderPath);
+                                    mainWindow.previousDirectory = match.Value;
+                                    RenameFolder(mainWindow.folderPath, mainWindow.previousDirectory + mainWindow.h1Name);
+                                    OpenFolder(mainWindow.folderPath);
+                                }
+                                break;
                             }
                         }
                     }
                 }
             }
+            catch
+            {
+                mainWindow.folderPath = CompareFolderName(mainWindow.clipboardText);
+                mainWindow.nameValue = mainWindow.clipboardText;
+                ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                if (mainWindow.folderPath == "Not Found")
+                {
+                    UpdateFoldersNames();
+                    mainWindow.folderPath = CompareFolderName(mainWindow.nameValue);
+                    ShowDirectoryTextBox.Text = mainWindow.folderPath;
+                }
+                if (mainWindow.folderPath != "Not Found")
+                {
+                    OpenFolder(mainWindow.folderPath);
+                }
+            }
+
         }
 
         /// <summary>

@@ -27,7 +27,7 @@ namespace QuickOpenFolder
         public string clipboardText { get; set; }
 
         /// <summary>
-        /// h1元素
+        /// h1_2元素
         /// </summary>
         public string h1Name { get; set; }
 
