@@ -69,14 +69,22 @@ namespace QuickOpenFolder
         /// <returns></returns>
         public List<string> GetSubfolders(string path)
         {
-            var subfolders = new List<string>();
-            var subfolderPaths = Directory.GetDirectories(path);
-            foreach (var subfolderPath in subfolderPaths)
+            try
             {
-                subfolders.Add(subfolderPath);
-                subfolders.AddRange(GetSubfolders(subfolderPath));
+                var subfolders = new List<string>();
+                var subfolderPaths = Directory.GetDirectories(path);
+                foreach (var subfolderPath in subfolderPaths)
+                {
+                    subfolders.Add(subfolderPath);
+                    subfolders.AddRange(GetSubfolders(subfolderPath));
+                }
+                return subfolders;
             }
-            return subfolders;
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return null;
+            }
         }
 
         [DllImport("user32.dll", EntryPoint = "ShowWindow", SetLastError = true)]

@@ -38,9 +38,8 @@ namespace QuickOpenFolder
                 File.WriteAllText(folderNamesFile, "[\"\"]");
             }
             mainWindow.defaultSelectFolderPath = System.IO.File.ReadAllText("folderpath.txt");
-            //UpdateFoldersNames();
             txtFolderPathTextBox.Text = mainWindow.defaultSelectFolderPath;
-
+            UpdateFoldersNames();
             // 设置 Timer 控件的间隔时间为 1 秒
             timer1.Interval = 1000;
 
@@ -115,6 +114,7 @@ namespace QuickOpenFolder
         /// </summary>
         private void UpdateFoldersNames()
         {
+            if (string.IsNullOrEmpty(mainWindow.defaultSelectFolderPath)) return;
             ShowUpdateStateTextBox.Text = "更新中……";
             List<string> list = new List<string>();
             list = mainWindow.GetSubfolders(mainWindow.defaultSelectFolderPath);
@@ -134,6 +134,7 @@ namespace QuickOpenFolder
         /// <returns></returns>
         private string CompareFolderName(string folderName)
         {
+            if (string.IsNullOrEmpty(mainWindow.defaultSelectFolderPath)) return null;
             // 读取JSON文件并将其反序列化为一个对象列表
             string json = File.ReadAllText("folderNames.json");
             List<string> list = JsonConvert.DeserializeObject<List<string>>(json);
@@ -239,6 +240,7 @@ namespace QuickOpenFolder
         /// <param name="e"></param>
         private void timer1_Tick(object sender, EventArgs e)
         {
+            if (string.IsNullOrEmpty(mainWindow.defaultSelectFolderPath)) return;
             if (mainWindow.compareFolderNameButtonState == true)
             {
                 // 检查剪贴板是否有内容
@@ -273,6 +275,7 @@ namespace QuickOpenFolder
 
         private void DealWithClipboard()
         {
+            if (string.IsNullOrEmpty(mainWindow.defaultSelectFolderPath)) return;
             mainWindow.clipboardText = Clipboard.GetText();
             ShowClipboardContentTextBox.Text = mainWindow.clipboardText;
 
