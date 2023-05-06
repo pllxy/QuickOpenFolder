@@ -246,11 +246,24 @@ namespace QuickOpenFolder
                 {
                     mainWindow.clipboardText = Clipboard.GetText();
                     ShowClipboardContentTextBox.Text = mainWindow.clipboardText;
-                    if (!mainWindow.clipboardText.Contains(mainWindow.nameValue))
+                    ChangeClipboardChangedState();
+                    if (mainWindow.clipboardChangedState == true)
                     {
                         DealWithClipboard();
                     }
                 }
+            }
+        }
+
+        private void ChangeClipboardChangedState()
+        {
+            if (mainWindow.clipboardText == mainWindow.clipboardTextPre)
+            {
+                mainWindow.clipboardChangedState = false;
+            }
+            else
+            {
+                mainWindow.clipboardChangedState = true;
             }
         }
 
@@ -335,6 +348,8 @@ namespace QuickOpenFolder
                         }
                     }
                 }
+                //保存剪切板内容
+                mainWindow.clipboardTextPre = mainWindow.clipboardText;
             }
             catch
             {
@@ -351,6 +366,8 @@ namespace QuickOpenFolder
                 {
                     OpenFolder(mainWindow.folderPath);
                 }
+                //保存剪切板内容
+                mainWindow.clipboardTextPre = mainWindow.clipboardText;
             }
 
         }

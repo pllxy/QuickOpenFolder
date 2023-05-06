@@ -27,6 +27,16 @@ namespace QuickOpenFolder
         public string clipboardText { get; set; }
 
         /// <summary>
+        /// 前一个剪切板内容
+        /// </summary>
+        public string clipboardTextPre { get; set; }
+
+        /// <summary>
+        /// 剪切板变更状态
+        /// </summary>
+        public bool clipboardChangedState = false;
+
+        /// <summary>
         /// h1_2元素
         /// </summary>
         public string h1Name { get; set; }
@@ -45,6 +55,7 @@ namespace QuickOpenFolder
         /// 提醒重命名按钮状态
         /// </summary>
         public bool renameButtonState = true;
+
 
         /// <summary>
         /// 用于匹配的目标名称，默认不包含于剪切板内容
